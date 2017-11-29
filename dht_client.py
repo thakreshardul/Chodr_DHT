@@ -18,6 +18,7 @@ class TextInterface:
     def connect_to_root(self, root_ip, root_port):
         self.client.tcp.start(self.client.ip, self.client.port, root_ip, root_port)
         print "Connected to root"
+        print self.client.tcp.receive()
 
     @staticmethod
     def show_menu():
@@ -33,7 +34,7 @@ class TextInterface:
                 pass
             elif command == "e":
 
-                pass
+                sys.exit(0)
             else:
                 print "Enter correct instruction"
 
