@@ -18,7 +18,7 @@ class TextInterface:
     def connect_to_root(self, root_ip, root_port):
         self.client.tcp.start(self.client.ip, self.client.port, root_ip, root_port)
         print "Connected to root"
-        print self.client.tcp.receive()
+        print self.client.tcp.client_receive()
 
     @staticmethod
     def show_menu():

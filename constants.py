@@ -11,3 +11,10 @@ message_type = {
     "store": 2,
     "retrieve": 3
 }
+
+message_dictionary = {
+    0: "join",
+    1: "leave",
+    2: "store",
+    3: "retreive"
+}

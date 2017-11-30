@@ -19,15 +19,43 @@ class Tcp:
                 print str(e)
 
     def listen(self):
-        self.socket.listen(constants.BACKLOG_FOR_TCP_SOCKET)
-        print "Listening for connection"
+        try:
+            self.socket.listen(constants.BACKLOG_FOR_TCP_SOCKET)
+            print "Listening for connection"
+        except exception.ConnectionListenException as e:
+            print str(e)
 
     def accept(self):
-        self.conn, self.address = self.socket.accept()
+        try:
+            self.conn, self.address = self.socket.accept()
+        except exception.ConnectionAcceptException as e:
+            print str(e)
 
-    def send(self, msg):
-        self.conn.send(msg)
+    def client_receive(self):
+        try:
+            msg = self.socket.recv(constants.BUFFER_SIZE)
+        except exception.ClientReceiveException as e:
+            print str(e)
 
-    def receive(self):
-        msg = self.conn.recv(constants.BUFFER_SIZE)
         return msg
+
+    def client_send(self, msg):
+        try:
+            self.socket.send(msg)
+        except exception.ClientSendException as e:
+            print str(e)
+
+    def peer_receive(self):
+        try:
+            msg = self.conn.recv(constants.BUFFER_SIZE)
+        except exception.PeerSendException as e:
+            print str(e)
+
+        return msg
+
+    def peer_send(self, msg):
+        try:
+            self.conn.sendall(msg)
+        except exception.PeerSendException as e:
+            print str(e)
+
