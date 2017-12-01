@@ -1,4 +1,5 @@
 import socket
+import pickle
 
 import constants
 import exception
@@ -10,13 +11,26 @@ class Tcp:
         self.conn = None
         self.address = None
 
-    def start(self, ip, port, root_ip=None, root_port=None):
-        self.socket.bind((socket.gethostbyname(ip), int(port)))
-        if root_ip and root_port:
-            try:
-                self.socket.connect((socket.gethostbyname(root_ip), int(root_port)))
-            except exception.RootConnectException as e:
-                print str(e)
+    @staticmethod
+    def return_host_ip(ip):
+        return socket.gethostbyname(ip)
+
+    def start(self, address):
+        try:
+            self.socket.bind(address)
+        except exception.BindException as e:
+            print str(e)
+
+    def connect_to_root(self, root_ip, root_port):
+        try:
+            self.socket.connect((root_ip, root_port))
+        except exception.RootConnectException as e:
+            print str(e)
+
+    def tear_down(self):
+        if self.conn:
+            self.conn.close()
+        self.socket.close()
 
     def listen(self):
         try:
@@ -34,28 +48,29 @@ class Tcp:
     def client_receive(self):
         try:
             msg = self.socket.recv(constants.BUFFER_SIZE)
+            message = pickle.loads(msg)
+            return message
         except exception.ClientReceiveException as e:
             print str(e)
 
-        return msg
-
     def client_send(self, msg):
         try:
-            self.socket.send(msg)
+            message = pickle.dumps(msg)
+            self.socket.send(message)
         except exception.ClientSendException as e:
             print str(e)
 
     def peer_receive(self):
         try:
             msg = self.conn.recv(constants.BUFFER_SIZE)
+            message = pickle.loads(msg)
+            return message
         except exception.PeerSendException as e:
             print str(e)
 
-        return msg
-
-    def peer_send(self, msg):
+    def peer_send(self, msg, address):
         try:
-            self.conn.sendall(msg)
+            message = pickle.dumps(msg)
+            self.conn.sendto(message, address)
         except exception.PeerSendException as e:
             print str(e)
-

@@ -9,20 +9,26 @@ class Message:
         self.type = type
         self.data = data
 
-    def __str__(self):
-        type = struct.pack("!B", self.type)
-        return type + self.data
-
 
 class MessageParser:
     @staticmethod
-    def __get_message_type(message):
+    def get_message_type(message):
         try:
-            return constants.message_dictionary[ord(message[0])]
+            return constants.message_dictionary[message.type]
         except exception.TypeException as e:
             print str(e)
 
     def validate_message_type(self, message):
         try:
-            if self.__get_message_type(message) not in constants.message_type:
-                raise
+            if self.get_message_type(message) not in constants.message_type:
+                raise exception.TypeException
+        except exception.TypeException as e:
+            print str(e)
+
+    @staticmethod
+    def extract_data(message):
+        try:
+            return message.data
+        except exception.DataException as e:
+            print str(e)
+

@@ -2,6 +2,11 @@ class ConnectionException(Exception):
     pass
 
 
+class BindException(ConnectionException):
+    def __str__(self):
+        return "Error in Bind call"
+
+
 class RootConnectException(ConnectionException):
     def __str__(self):
         return "Error connecting to root"
@@ -40,3 +45,7 @@ class ConnectionListenException(ConnectionException):
 class TypeException(ConnectionException):
     def __str__(self):
         return "Error in message type"
+
+class DataException(ConnectionException):
+    def __str__(self):
+        return "Error in extracting data"

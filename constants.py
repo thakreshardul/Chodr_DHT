@@ -4,17 +4,18 @@ ROOT_CLI_ARGUMENTS = 7
 PEER_CLI_ARGUMENTS = 9
 PEER_CLI_ARGUMENTS_WITH_MODE = PEER_CLI_ARGUMENTS + 2
 BACKLOG_FOR_TCP_SOCKET = 10
+SOCKET_TIMEOUT = 10
+GREETING_MESSAGE = "Hello"
+DB_FILE = "index"
 
 message_type = {
     "join": 0,
-    "leave": 1,
-    "store": 2,
-    "retrieve": 3
+    "successor": 1,
+    "predecessor": 2,
 }
 
 message_dictionary = {
     0: "join",
-    1: "leave",
-    2: "store",
-    3: "retreive"
+    1: "successor",
+    2: "predecessor",
 }
