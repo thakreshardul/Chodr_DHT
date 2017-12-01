@@ -12,10 +12,12 @@ message_type = {
     "join": 0,
     "successor": 1,
     "predecessor": 2,
+    "update_predecessor": 3
 }
 
 message_dictionary = {
     0: "join",
     1: "successor",
     2: "predecessor",
+    3: "update_predecessor"
 }
