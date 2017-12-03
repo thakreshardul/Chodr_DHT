@@ -25,6 +25,7 @@ message_type = {
     "retrieve": 6,
     "ack": 7,
     "heartbeat": 8,
+    "close":9,
     "test": 20
 }
 
@@ -38,6 +39,7 @@ message_dictionary = {
     6: "retrieve",
     7: "ack",
     8: "heartbeat",
+    9: "close",
     20: "test"
 }
 
