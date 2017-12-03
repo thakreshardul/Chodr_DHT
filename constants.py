@@ -13,6 +13,7 @@ CLIENT = "client"
 SUCCESSOR = "successor"
 PREDECESSOR = "predecessor"
 HEARTBEAT = "heartbeat"
+SHUT_RDWR = 2
 
 message_type = {
     "join": 0,
@@ -23,7 +24,8 @@ message_type = {
     "store": 5,
     "retrieve": 6,
     "ack": 7,
-    "heartbeat": 8
+    "heartbeat": 8,
+    "test": 20
 }
 
 message_dictionary = {
@@ -35,6 +37,7 @@ message_dictionary = {
     5: "store",
     6: "retrieve",
     7: "ack",
-    8: "heartbeat"
+    8: "heartbeat",
+    20: "test"
 }
 

@@ -43,11 +43,11 @@ class Tcp:
             if param == constants.CLIENT:
                 self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                self.socket.bind(address)
+                self.socket.bind(self.address)
             elif param == constants.PREDECESSOR:
                 self.predecessor_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.predecessor_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                self.predecessor_socket.bind(address)
+                self.predecessor_socket.bind((address[0], self.predecessor_port))
         except exception.ConnectionException as e:
             print str(e)
 

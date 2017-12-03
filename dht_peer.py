@@ -25,6 +25,7 @@ class DhtPeer:
 
     def run(self):
         self.tcp.start(self.address)
+#        print self.id
         try:
             if self.root:
                 t = threading.Thread(target=self.__client_handler)
@@ -36,24 +37,35 @@ class DhtPeer:
                 t = threading.Thread(target=self.__predecessor_handler)
                 t.start()
                 self.threads.append(t)
-                t = threading.Thread(target=self.__printer)
-                t.start()
-                self.threads.append(t)
+                # t = threading.Thread(target=self.__printer)
+                # t.start()
+                # self.threads.append(t)
+                self.__test()
             else:
                 self.__join()
-                t = threading.Thread(target=self.__printer)
-                t.start()
-                self.threads.append(t)
-
+                # t = threading.Thread(target=self.__printer)
+                # t.start()
+                # self.threads.append(t)
+                self.__test()
             for t in self.threads:
                 t.join()
         except Exception as e:
             print str(e)
 
-    def __printer(self):
+    def __test(self):
         while True:
             time.sleep(5)
             print self.address, self.successor, self.predecessor
+            msg = Message(constants.message_type["test"], address=self.address, data="hello")
+            msg = MessageParser.pack_msg(msg)
+            print self.tcp.successor_connection, self.tcp.predecessor_socket
+            self.tcp.successor_connection.sendall(msg)
+            self.tcp.predecessor_socket.sendall(msg)
+
+    # def __printer(self):
+    #     while True:
+    #         time.sleep(5)
+    #         print self.address, self.successor, self.predecessor
 
     def __client_handler(self):
         self.tcp.socket.listen(constants.BACKLOG_FOR_TCP_SOCKET)
@@ -61,9 +73,9 @@ class DhtPeer:
             try:
                 self.tcp.connection, self.tcp.useless = self.tcp.socket.accept()
                 request = self.tcp.connection.recv(constants.BUFFER_SIZE)
-                print "Request received"
                 msg_parser = MessageParser()
                 request = msg_parser.unpack_msg(request)
+#                print request.type
                 t = threading.Thread(target=self.__request_handler, args=(request,))
                 t.start()
                 self.threads.append(t)
@@ -71,6 +83,8 @@ class DhtPeer:
                 print str(e)
 
     def __successor_handler(self):
+        while self.successor is None:
+            pass
         self.tcp.successor_socket.listen(constants.BACKLOG_FOR_TCP_SOCKET)
         while True:
             try:
@@ -102,16 +116,19 @@ class DhtPeer:
         msg_parser = MessageParser()
         # print "Handling - ", request.type
         msg_parser.validate_message_type(request)
+        if request.type == constants.message_type["test"]:
+            print request.sender, request.data
         if request.type == constants.message_type["join"]:
             self.__join_handler(request)
         elif request.type == constants.message_type["set_predecessor"]:
             if request.destination == self.address:
                 print "setting predecessor to: ", request.data
                 self.predecessor = request.data
+                self.tcp.predecessor_socket.connect(self.predecessor)
             else:
                 request.sender = self.address
                 request = msg_parser.pack_msg(request)
-                self.tcp.predecessor_socket.send(request)
+                self.tcp.predecessor_socket.sendall(request)
         elif request.type == constants.message_type["set_successor"]:
             if request.destination == self.address:
                 print "setting successor to: ", request.data
@@ -119,79 +136,55 @@ class DhtPeer:
             else:
                 request.sender = self.address
                 request = msg_parser.pack_msg(request)
-                self.tcp.predecessor_socket.send(request)
+                self.tcp.predecessor_socket.sendall(request)
         elif request.type == constants.message_type["update_predecessor"]:
             print "Updating predecessor: ", request.data
-            self.tcp.tear_down(constants.PREDECESSOR)
+            #self.tcp.tear_down(constants.PREDECESSOR)
+            self.tcp.predecessor_socket.shutdown(constants.SHUT_RDWR)
+            self.tcp.predecessor_socket.close()
             self.tcp.restart_socket(constants.PREDECESSOR, self.address)
             self.predecessor = request.data
-            self.tcp.predecessor_socket.connect(self.predecessor)
+            try:
+                self.tcp.predecessor_socket.connect(self.predecessor)
+            except Exception as e:
+                print str(e)
 
     def __join_handler(self, request):
         try:
             msg_parser = MessageParser()
             destination = request.destination
-            print self.successor, self.predecessor
+ #           print self.successor, self.predecessor
             if self.successor is None and self.predecessor is None:
                 # send msg to request.sender their successor and predecessor
                 msg = Message(constants.message_type["set_successor"], self.address,
                               (self.address[0], self.tcp.predecessor_port), destination)
                 msg = msg_parser.pack_msg(msg)
-                self.tcp.connection.send(msg)
+                self.tcp.connection.sendall(msg)
 
                 msg = Message(constants.message_type["set_predecessor"], self.address,
                               (self.address[0], self.tcp.successor_port), destination)
-                print self.tcp.predecessor_port
+#                print self.tcp.predecessor_port
                 msg = msg_parser.pack_msg(msg)
-                self.tcp.connection.send(msg)
+                self.tcp.connection.sendall(msg)
 
                 self.tcp.connection.close()
 
                 self.successor = (request.data[0], request.data[1]+2)
                 self.predecessor = (request.data[0], request.data[1]+1)
 
-                print self.successor, self.predecessor
+ #               print self.successor, self.predecessor
             else:
                 peer_id = sha1(str(request.data[1])).hexdigest()
                 successor_id = sha1(str(self.successor[1])).hexdigest()
                 if self.id > successor_id:
-                    # if peer_id > self.id:
-                    #     #### fwd to successor
-                    #     # add node between self and successor: 100 and 20
-                    #     msg = Message(constants.message_type["set_predecessor"], self.address,
-                    #                   (self.address[0], self.address[1] + 1), destination)
-                    #     msg = msg_parser.pack_msg(msg)
-                    #
-                    #     if self.root:
-                    #         self.tcp.connection.send(msg)
-                    #     else:
-                    #         self.tcp.predecessor_socket.send(msg)
-                    #
-                    #     msg = Message(constants.message_type["set_successor"], self.address,
-                    #                   (self.successor[0], self.successor[0] + 2), destination)
-                    #     msg = msg_parser.pack_msg(msg)
-                    #
-                    #     if self.root:
-                    #         self.tcp.connection.send(msg)
-                    #     else:
-                    #         self.tcp.predecessor_socket.send(msg)
-                    #
-                    #     msg = Message(constants.message_type["update_predecessor"], self.address,
-                    #                   (request.data[0], request.data[1] + 1), self.successor)
-                    #     msg = msg_parser.pack_msg(msg)
-                    #     self.tcp.successor_connection.send(msg)
-                    #
-                    #     self.successor = (request.data[0], request.data[1] + 2)
-                    #     self.tcp.successor_connection.close()
-                    # else:
                     if peer_id > successor_id and self.successor[0] != self.root_address[0]:
                             # send the request to successor
                             # print "sending to successor"
                             request.sender = self.address
-                            print request
+  #                          print request
                             request = msg_parser.pack_msg(request)
 
-                            self.tcp.successor_connection.send(request)
+                            self.tcp.successor_connection.sendall(request)
 
                             response = self.tcp.successor_connection.recv(constants.BUFFER_SIZE)
                             response = msg_parser.unpack_msg(response)
@@ -208,26 +201,27 @@ class DhtPeer:
                             msg = msg_parser.pack_msg(msg)
 
                             if self.root:
-                                self.tcp.connection.send(msg)
+                                self.tcp.connection.sendall(msg)
                             else:
-                                self.tcp.predecessor_socket.send(msg)
+                                self.tcp.predecessor_socket.sendall(msg)
 
                             msg = Message(constants.message_type["set_successor"], self.address,
                                           (self.successor[0], self.successor[1] + 2), destination)
                             msg = msg_parser.pack_msg(msg)
 
                             if self.root:
-                                self.tcp.connection.send(msg)
+                                self.tcp.connection.sendall(msg)
                             else:
-                                self.tcp.predecessor_socket.send(msg)
+                                self.tcp.predecessor_socket.sendall(msg)
 
-                            msg = Message(constants.message_type["update_predecessor"], self.address,
-                                          (request.data[0], request.data[1] + 1), self.successor)
+                            msg = Message(msg_type=constants.message_type["update_predecessor"], data=(request.data[0], request.data[1] + 1))
                             msg = msg_parser.pack_msg(msg)
-                            self.tcp.successor_connection.send(msg)
+
+                            self.tcp.successor_connection.sendall(msg)
 
                             self.successor = (request.data[0], request.data[1] + 2)
-                            self.tcp.successor_connection.close()
+                            #self.tcp.successor_connection.shutdown(network.socket.SHUT_RDWR)
+                            #self.tcp.successor_connection.close()
                 else:
                     if peer_id < successor_id or self.successor[0] == self.root_address[0]:
                         # add node in between self and successor
@@ -237,34 +231,36 @@ class DhtPeer:
                         msg = msg_parser.pack_msg(msg)
 
                         if self.root:
-                            self.tcp.connection.send(msg)
+                            self.tcp.connection.sendall(msg)
                         else:
-                            self.tcp.predecessor_socket.send(msg)
-
+                            self.tcp.predecessor_socket.sendall(msg)
+   #                     print "here"
                         msg = Message(constants.message_type["set_successor"], self.address,
                                       (self.successor[0], self.successor[1] + 2), destination)
                         msg = msg_parser.pack_msg(msg)
 
                         if self.root:
-                            self.tcp.connection.send(msg)
+                            self.tcp.connection.sendall(msg)
                         else:
-                            self.tcp.predecessor_socket.send(msg)
-
+                            self.tcp.predecessor_socket.sendall(msg)
+    #                    print "here"
                         msg = Message(constants.message_type["update_predecessor"], self.address,
                                       (request.data[0], request.data[1] + 1), self.successor)
+     #                   print msg.data
                         msg = msg_parser.pack_msg(msg)
                         # time.sleep(2)
-                        self.tcp.successor_connection.send(msg)
 
+                        self.tcp.successor_connection.sendall(msg)
+      #                  print "here"
                         self.successor = (request.data[0], request.data[1] + 2)
                         self.tcp.successor_connection.close()
                     else:
                         # send the request to successor
-                        print "sending to successor"
+       #                 print "sending to successor"
                         request.sender = self.address
                         request = msg_parser.pack_msg(request)
 
-                        self.tcp.successor_connection.send(request)
+                        self.tcp.successor_connection.sendall(request)
 
                         response = self.tcp.successor_connection.recv(constants.BUFFER_SIZE)
                         response = msg_parser.unpack_msg(response)
@@ -273,18 +269,17 @@ class DhtPeer:
                         response = self.tcp.successor_connection.recv(constants.BUFFER_SIZE)
                         response = msg_parser.unpack_msg(response)
                         self.__request_handler(response)
-                        pass
         except Exception as e:
             print "Join handler failed"+str(e)
 
     def __join(self):
         try:
             self.tcp.connect_to_root(self.root_address)
-            print self.successor, self.predecessor
+        #    print self.successor, self.predecessor
             msg = Message(constants.message_type["join"], self.address, self.address, self.address)
             msg_parser = MessageParser()
             msg = msg_parser.pack_msg(msg)
-            self.tcp.socket.send(msg)
+            self.tcp.socket.sendall(msg)
             response = self.tcp.socket.recv(constants.BUFFER_SIZE)
             response = msg_parser.unpack_msg(response)
             self.__request_handler(response)
@@ -299,6 +294,7 @@ class DhtPeer:
             t = threading.Thread(target=self.__predecessor_handler)
             t.start()
             self.threads.append(t)
+
         #     t = threading.Thread(target=self.__heartbeat)
         #     self.threads.append(t)
         #     t.start()
