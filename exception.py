@@ -46,6 +46,7 @@ class TypeException(ConnectionException):
     def __str__(self):
         return "Error in message type"
 
+
 class DataException(ConnectionException):
     def __str__(self):
         return "Error in extracting data"

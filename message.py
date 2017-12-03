@@ -1,13 +1,15 @@
-import struct
+import pickle
 
 import constants
 import exception
 
 
 class Message:
-    def __init__(self, type="", data=""):
-        self.type = type
+    def __init__(self, msg_type=None, address=None, data=None, destination=None):
+        self.type = msg_type
+        self.sender = address
         self.data = data
+        self.destination = destination
 
 
 class MessageParser:
@@ -25,10 +27,18 @@ class MessageParser:
         except exception.TypeException as e:
             print str(e)
 
+    # def extract_data(self, msg):
+    #     return pickle.loads(msg.data)
+
     @staticmethod
-    def extract_data(message):
+    def pack_msg(msg):
+        return pickle.dumps(msg)
+
+    @staticmethod
+    def unpack_msg(msg):
         try:
-            return message.data
-        except exception.DataException as e:
+            msg = pickle.loads(msg)
+            return msg
+        except Exception as e:
             print str(e)
 
