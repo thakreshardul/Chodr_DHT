@@ -1,11 +1,10 @@
+#!/usr/bin/env python
+
 import sys
-import json
-import time
 
 import network
 import constants
 from message import Message, MessageParser
-import exception
 
 
 class DhtClient:
@@ -32,13 +31,12 @@ class TextInterface:
         print response.data
 
     def show_menu(self):
-        print "Enter a command:\ns --> Store\ni --> Iterative Search\n" \
-              "r --> Recursive Search\ne --> exit\n"
         msg_parser = MessageParser()
         while True:
+            print "Enter a command:\ns --> Store\ni --> Iterative Search\n" \
+                  "r --> Recursive Search\ne --> exit\n"
             command = raw_input()
             if command == "s":
-                data = dict()
                 print "Enter key:"
                 key = raw_input()
                 print "Enter value:"

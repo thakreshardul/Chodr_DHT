@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from hashlib import sha1
 import sys
 import threading
@@ -6,7 +8,6 @@ import time
 import network
 import constants
 from message import MessageParser, Message
-import exception
 
 
 tcp = None

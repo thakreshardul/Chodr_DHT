@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 BUFFER_SIZE = 100000
 CLIENT_CLI_ARGUMENTS = 9
 ROOT_CLI_ARGUMENTS = 7
